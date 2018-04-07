@@ -19,33 +19,51 @@ Date: 4/11/2018
 using namespace std;
 
 class ItemInfo {
-	ItemInfo(vector<string>) {
-
+public:
+	ItemInfo(vector<string> values) {
+		description = values.at(0);
+		price = stod(values.at(1));
+		weight = stod(values.at(2));
 	}
+
+	friend ostream& operator<<(ostream& out, const ItemInfo);
+private:
+		string description;
+		double price, weight;
+
 };
+
+ostream& operator<<(ostream& out, const ItemInfo i){
+	out << setw(60) << left << i.description
+		<< '$' << setw(15) << i.price
+		<< setw(15) << i.weight;
+	return out;
+}
 
 typedef map<string, ItemInfo> Catalog;
 typedef map<string, int> Order;
 
 void readCatalog(Catalog& catalog, const string& fileName) {
-	ifstream data_file;
-	data_file.open(fileName);
+	ifstream data_file(fileName);
 	if (!data_file) {
-		//Throw error?
+		cout << "INVLIAD FILRFNSEKLJFGVNJ KWLBSEFBNEKSWHJBFKLHSWEA\n";
+		throw invalid_argument{"File not fucking found\n"};
+		return;
 	}
-
 	string line;
 
-	while (getline(data_file, line, '\n')) {   // : as separator
-									  // turn the string into a series of tokens 
-									  //   stored in a vector of strings called tokens
+	while (getline(data_file, line, '\n')) {
+
 		stringstream iss(line);
 		string elem;
+		vector<string> vals;
+		string start;
+		getline(iss, start, ':');
 		while (getline(iss, elem, ':')){
-			cout << "(" << elem << ")\t";
-			//catalog.insert<>;
+			vals.push_back(elem);
 		}
-		cout << "\n";
+		ItemInfo i = ItemInfo(vals);
+		catalog.insert({start, i});
 	}
 	data_file.close();
 }
@@ -53,7 +71,17 @@ void readCatalog(Catalog& catalog, const string& fileName) {
 // reads the input file and creates the catalog; throws a 
 // runtime_error if the file cannot be opened
 void printCatalog(const Catalog& catalog) {
-
+	cout << "Catalog:\n";
+	cout 
+		<< setw(10) << left <<  "SKU" 
+		<< setw(60) << left << "Description"
+		<< setw(15) << left << "Unit Price"
+		<< setw(15) << left << "Shipping Wt. (lbs.)"
+		<< "\n";
+	cout << string(110, '=') << "\n";
+	for (pair<string, ItemInfo> i : catalog) {
+		cout << setw(10) << left << i.first << i.second << "\n";
+	}
 }
 // prints the SKU, description, price, and weight of every item in 
 // the catalog 
@@ -98,16 +126,19 @@ int main()
 	Order order = Order();
 
 	// test readCatalog exception handling by opening a non-existent file
+	try {
+		readCatalog(catalog, "C:\\Users\Lucas\not_real_file.txt");
+	}
+	catch (invalid_argument e) {
+		cout << "Caught exception.";
+	}
 
-
-
-
+	cout << "\nReal file now\n";
 	// open CatalogData.txt by calling readCatalog which populates the Catalog map 
 	readCatalog(catalog, "C:\\Users\\Lucas\\Dropbox\\CSC 402\\Project5\\CatalogData.txt");
 
-
-
 	// print out the entire catalog
+	printCatalog(catalog);
 
 	// search for a few specific items by SKU, some found, at least one that cannot be found
 
