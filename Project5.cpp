@@ -6,32 +6,48 @@ Date: 4/11/2018
 */
 
 #define _CRT_SECURE_NO_WARNINGS
-#pragma warning( disable: 4018 )
 #pragma once
 
 #include <iomanip>
 #include <map>
 #include <string>
+#include <sstream>
 #include <iostream>
+#include <vector>
+#include <fstream>
 
 using namespace std;
 
 class ItemInfo {
+	ItemInfo(vector<string>) {
 
+	}
 };
 
 typedef map<string, ItemInfo> Catalog;
 typedef map<string, int> Order;
 
-
-
-
 void readCatalog(Catalog& catalog, const string& fileName) {
-	while (getline(ss, tmp, ':')) {   // : as separator
+	ifstream data_file;
+	data_file.open(fileName);
+	if (!data_file) {
+		//Throw error?
+	}
+
+	string line;
+
+	while (getline(data_file, line, '\n')) {   // : as separator
 									  // turn the string into a series of tokens 
 									  //   stored in a vector of strings called tokens
-		tokens.push_back(tmp);
+		stringstream iss(line);
+		string elem;
+		while (getline(iss, elem, ':')){
+			cout << "(" << elem << ")\t";
+			//catalog.insert<>;
+		}
+		cout << "\n";
 	}
+	data_file.close();
 }
 
 // reads the input file and creates the catalog; throws a 
@@ -87,7 +103,7 @@ int main()
 
 
 	// open CatalogData.txt by calling readCatalog which populates the Catalog map 
-
+	readCatalog(catalog, "C:\\Users\\Lucas\\Dropbox\\CSC 402\\Project5\\CatalogData.txt");
 
 
 

@@ -35,3 +35,5 @@
 
 #Lucas Custom
 *.vcxproj*
+Release/
+Release/
