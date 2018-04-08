@@ -2,7 +2,7 @@
 File Name: Project5.cpp
 Author: Lucas Combs
 Course: CSC 402
-Date: 4/11/2018
+Date: 04/07/2018
 */
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -100,12 +100,15 @@ void readCatalog(Catalog& catalog, const string& fileName) {
 		//Catalog item
 		catalog.insert({ SKU, i });
 	}
+
+	//Close file, we are finished
 	data_file.close();
 }
 
 // prints the SKU, description, price, and weight of every item in 
 // the catalog 
 void printCatalog(const Catalog& catalog) {
+	//Print headings
 	cout << "Catalog:\n";
 	cout
 		<< setw(10) << left << "SKU"
@@ -114,6 +117,8 @@ void printCatalog(const Catalog& catalog) {
 		<< setw(15) << left << "Shipping Wt. (lbs.)"
 		<< "\n";
 	cout << string(110, '=') << "\n";
+
+	//Loop through items & print them out
 	for (Catalog::const_iterator it = catalog.begin(); it != catalog.end(); it++) {
 		cout << setw(10) << left << it->first << it->second << "\n";
 	}
@@ -124,7 +129,7 @@ void printCatalog(const Catalog& catalog) {
 // price 0.00, and weight 0.00 if the SKU is not in the catalog
 ItemInfo getItemData(const Catalog& catalog, const string& sku) {
 	Catalog::const_iterator it = catalog.find(sku);
-	if (it == catalog.end()) {
+	if (it == catalog.end()) { //Handle invalid item
 		return ItemInfo("Item Not Found", 0, 0);
 	}
 	else {
@@ -134,6 +139,7 @@ ItemInfo getItemData(const Catalog& catalog, const string& sku) {
 
 // Lists the SKU, description, and quantity of each type of order item
 void displayOrderItems(const Order& order, const Catalog& catalog) {
+	//Print headings
 	cout << "Order Items:\n";
 	cout
 		<< setw(10) << left << "SKU"
@@ -142,8 +148,7 @@ void displayOrderItems(const Order& order, const Catalog& catalog) {
 		<< "\n";
 	cout << string(110, '=') << "\n";
 
-	;
-
+	//Loop through items
 	for (Order::const_iterator it = order.begin(); it != order.end(); it++) {
 		ItemInfo d = getItemData(catalog, it->first);
 		cout
@@ -154,67 +159,76 @@ void displayOrderItems(const Order& order, const Catalog& catalog) {
 	}
 }
 
+// adds item(s) to the order; throws a logic_error if the item cannot
+// be found in the catalog 
 void addItem(Order & order, const Catalog& catalog, const string& sku, int quantity) {
+
+	//Make sure item is valid
 	ItemInfo i = getItemData(catalog, sku);
 	if (i.getDescription() == "Item Not Found") {
 		throw logic_error("Item not found is catalog: " + sku);
 	}
 	else {
-		try {
-			Order::const_iterator it = order.find(sku);
-			int exisiting_qty = it == order.end() ? 0 : it->second;
-			order.insert_or_assign(sku, exisiting_qty + quantity);
-		}
-		catch (out_of_range) {
-			order.insert_or_assign(sku, quantity);
-		}
-	}
-}
-// adds item(s) to the order; throws a logic_error if the item cannot
-// be found in the catalog 
-
-void removeItem(Order & order, const string& sku, int quantity) {
-	try {
+		//Find existing qty (if any)
 		Order::const_iterator it = order.find(sku);
-		int existing_qty = it == order.end() ? 0 : it->second;
-		if (existing_qty - quantity <= 0) {
-			order.erase(sku);
-		}
-		else {
-			order.insert_or_assign(sku, existing_qty - quantity);
-		}
-	}
-	catch (out_of_range) {
-		throw logic_error("Item not found in order: " + sku);
+		int exisiting_qty = it == order.end() ? 0 : it->second;
+
+		//Update order with new QTY
+		order.insert_or_assign(sku, exisiting_qty + quantity);
 	}
 }
+
 // removes items(s) from the order; throws a logic_error if the item 
 // cannot be found in the order 
+void removeItem(Order & order, const string& sku, int quantity) {
+	//Pull item
+	Order::const_iterator it = order.find(sku);
 
+	//Make sure item is on order
+	if (it == order.end()) {
+		throw logic_error("Item not found in order: " + sku);
+	}
+
+	//Remove item if <= 0 are left on order
+	if (it->second - quantity <= 0) {
+		order.erase(sku);
+	}
+	else {
+		//remove QTY from order
+		order.insert_or_assign(sku, it->second - quantity);
+	}
+}
+
+// displays the number of unique item types, the total number of 
+// items, the total cost, and the total shipping weight 
 void displayOrderSummary(const Order& order, const Catalog& catalog) {
+	//Print heading
 	cout << "Order Summary:\n";
 	cout << string(110, '=') << "\n";
 
-	int num_items = 0;
-	double subtotal = 0;
-	double weight = 0;
+	int num_items = 0; //# items orders TOTAL(QTY)
+	double subtotal = 0; //Total cose
+	double weight = 0; //Total weight
 
+	//Loop through items
 	for (Order::const_iterator it = order.begin(); it != order.end(); it++) {
+		//Grab item info
 		ItemInfo info = getItemData(catalog, it->first);
+
+		//Update totals
 		num_items += it->second;
 		subtotal += info.getPrice() * it->second;
 		weight += info.getWeight() * it->second;
 	}
 
+	//Display summary
 	cout << "Distinct items: " << order.size() << "\n";
 	cout << "Total number of items: " << num_items << "\n";
 	cout << "Total cost: $" << subtotal << "\n";
-	cout << "Total weight: " << weight << "\n";
+	cout << "Total weight: " << weight << " lbs\n";
 }
-// displays the number of unique item types, the total number of 
-// items, the total cost, and the total shipping weight 
 
-
+//Load and use catalog!
 int main()
 {
 	// construct default Order and Catalog
