@@ -26,6 +26,20 @@ public:
 		weight = stod(values.at(2));
 	}
 
+	ItemInfo(string description, double price, double weight) : description(description), price(price), weight(weight) {};
+
+	string getDescription() {
+		return this->description;
+	}
+
+	double getPrice() {
+		return this->price;
+	}
+
+	double getWeight() {
+		return this->weight;
+	}
+
 	friend ostream& operator<<(ostream& out, const ItemInfo);
 private:
 		string description;
@@ -46,8 +60,7 @@ typedef map<string, int> Order;
 void readCatalog(Catalog& catalog, const string& fileName) {
 	ifstream data_file(fileName);
 	if (!data_file) {
-		cout << "INVLIAD FILRFNSEKLJFGVNJ KWLBSEFBNEKSWHJBFKLHSWEA\n";
-		throw invalid_argument{"File not fucking found\n"};
+		throw invalid_argument{"File not found\n"};
 		return;
 	}
 	string line;
@@ -88,7 +101,11 @@ void printCatalog(const Catalog& catalog) {
 
 
 ItemInfo getItemData(const Catalog& catalog, const string& sku) {
-
+	try {
+		return catalog.at(sku);
+	}catch (out_of_range) {
+		return ItemInfo("Item Not Found",0,0);
+	}
 }
 // finds a single item by SKU and returns the details as a struct;
 // returns a dummy struct with the description "Item not found", 
@@ -96,24 +113,63 @@ ItemInfo getItemData(const Catalog& catalog, const string& sku) {
 
 
 void displayOrderItems(const Order& order, const Catalog& catalog) {
+	cout << "Order Items:\n";
+	cout
+		<< setw(10) << left << "SKU"
+		<< setw(60) << left << "Description"
+		<< setw(15) << left << "Unit Price"
+		<< "\n";
+	cout << string(110, '=') << "\n";
 
+	for (pair<string, int> item: order) {
+		ItemInfo d = getItemData(catalog, item.first);
+		cout
+			<< setw(10) << left << item.first
+			<< setw(60) << left << d.getDescription()
+			<< setw(15) << left << d.getPrice()
+			<< "\n";
+	}
 }
 // Lists the SKU, description, and quantity of each type of order item
 
 void addItem(Order & order, const Catalog& catalog, const string& sku, int quantity) {
-
+	ItemInfo i = getItemData(catalog, sku);
+	if (i.getDescription() == "Item Not Found") {
+		throw logic_error("Item not found is catalog: " + sku);
+	}else {
+		try {
+			int exisiting_qty = order.at(sku);
+			order.insert_or_assign(sku, exisiting_qty + quantity);
+		}catch (out_of_range) {
+			order.insert_or_assign(sku, quantity);
+		}
+	}
 }
 // adds item(s) to the order; throws a logic_error if the item cannot
 // be found in the catalog 
 
 void removeItem(Order & order, const string& sku, int quantity) {
-
+	try {
+		int existing_qty = order.at(sku);
+		if (existing_qty - quantity <= 0) {
+			order.erase(sku);
+		}else {
+			order.insert_or_assign(sku, existing_qty - quantity);
+		}
+	}catch (out_of_range) {
+		throw logic_error("Item not found in order: " + sku);	
+	}
 }
 // removes items(s) from the order; throws a logic_error if the item 
 // cannot be found in the order 
 
 void displayOrderSummary(const Order& order, const Catalog& catalog) {
+	cout << "Order Summary:\n";
+	cout << string(110, '=') << "\n";
 
+	
+
+	cout << "Distinct item types";
 }
 // displays the number of unique item types, the total number of 
 // items, the total cost, and the total shipping weight 
