@@ -27,7 +27,7 @@ public:
 		weight = stod(tokens.at(2));
 	}
 
-	//Manual constrcutor
+	//Manual constructor
 	ItemInfo(string description, double price, double weight) : description(description), price(price), weight(weight) {};
 
 	//<Getters>
