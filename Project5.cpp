@@ -117,7 +117,7 @@ void displayOrderItems(const Order& order, const Catalog& catalog) {
 	cout
 		<< setw(10) << left << "SKU"
 		<< setw(60) << left << "Description"
-		<< setw(15) << left << "Unit Price"
+		<< setw(15) << left << "Quantity"
 		<< "\n";
 	cout << string(110, '=') << "\n";
 
@@ -126,7 +126,7 @@ void displayOrderItems(const Order& order, const Catalog& catalog) {
 		cout
 			<< setw(10) << left << item.first
 			<< setw(60) << left << d.getDescription()
-			<< setw(15) << left << d.getPrice()
+			<< setw(15) << left << item.second
 			<< "\n";
 	}
 }
@@ -167,9 +167,20 @@ void displayOrderSummary(const Order& order, const Catalog& catalog) {
 	cout << "Order Summary:\n";
 	cout << string(110, '=') << "\n";
 
-	
+	int num_items = 0;
+	double subtotal = 0;
+	double weight = 0;
 
-	cout << "Distinct item types";
+	for (pair<string, int> item : order) {
+		ItemInfo info = getItemData(catalog, item.first);
+		num_items += item.second;
+		subtotal += info.getPrice() * item.second;
+		weight += info.getWeight() * item.second;
+	}
+
+	cout << "Distinct item types: " << order.size() << "\n";
+	cout << "Total number of items: " << num_items << "\n";
+	cout << "Total weight: " << weight << "\n";
 }
 // displays the number of unique item types, the total number of 
 // items, the total cost, and the total shipping weight 
@@ -181,15 +192,16 @@ int main()
 	Catalog catalog = Catalog();
 	Order order = Order();
 
+	cout << "\nReading invalid catalog:\n";
 	// test readCatalog exception handling by opening a non-existent file
 	try {
-		readCatalog(catalog, "C:\\Users\Lucas\not_real_file.txt");
+		readCatalog(catalog, "C:\\Users\\Lucas\not_real_file.txt");
 	}
 	catch (invalid_argument e) {
-		cout << "Caught exception.";
+		cout << "Caught invalid file exception.\n";
 	}
 
-	cout << "\nReal file now\n";
+	cout << "\nReading correct catalog:\n";
 	// open CatalogData.txt by calling readCatalog which populates the Catalog map 
 	readCatalog(catalog, "C:\\Users\\Lucas\\Dropbox\\CSC 402\\Project5\\CatalogData.txt");
 
@@ -197,24 +209,33 @@ int main()
 	printCatalog(catalog);
 
 	// search for a few specific items by SKU, some found, at least one that cannot be found
-
-
 	// print out the details of few items using getItemData
+	cout
+		<< "\nSearching for 3 items, last one will not be found:\n"
+		<< getItemData(catalog, "4123BLU") << "\n"
+		<< getItemData(catalog, "4123BLA") << "\n"
+		<< getItemData(catalog, "Keyboard") << "\n";
 
-
+	cout << "\nAdding items to order.....\n";
 	// Add several items to order
-
+	addItem(order, catalog, "4123BLU", 5);
+	addItem(order, catalog, "4123BLU", 5); //Add a second time
+	addItem(order, catalog, "93456C", 12);
+	addItem(order, catalog, "93456C", 1); //Add a second time
+	addItem(order, catalog, "93456B", 1);
+	addItem(order, catalog, "576361B", 1);
 
 	// display items in the order
-
+	displayOrderItems(order, catalog);
 
 
 	// remove item(s) such that no item is completely removed
+	removeItem(order, "93456C", 2);
+	removeItem(order, "4123BLU", 2);
 
-
-
+	cout << "\nRemoving 2 of 93456C and 4123BLU\n";
 	// display items in the order to verify quantities
-
+	displayOrderItems(order, catalog);
 
 	// try to remove an item that is not in the order to test exception handling
 
