@@ -20,14 +20,17 @@ using namespace std;
 
 class ItemInfo {
 public:
-	ItemInfo(vector<string> values) {
-		description = values.at(0);
-		price = stod(values.at(1));
-		weight = stod(values.at(2));
+	//Construct directly from input file
+	ItemInfo(vector<string> tokens) {
+		description = tokens.at(0);
+		price = stod(tokens.at(1));
+		weight = stod(tokens.at(2));
 	}
 
+	//Manual constrcutor
 	ItemInfo(string description, double price, double weight) : description(description), price(price), weight(weight) {};
 
+	//<Getters>
 	string getDescription() {
 		return this->description;
 	}
@@ -39,14 +42,18 @@ public:
 	double getWeight() {
 		return this->weight;
 	}
+	//</Getters>
 
+	//Print support
 	friend ostream& operator<<(ostream& out, const ItemInfo);
+
 private:
 	string description;
 	double price, weight;
 
 };
 
+//Print operator for ItemInfo class
 ostream& operator<<(ostream& out, const ItemInfo i) {
 	out << setw(60) << left << i.description
 		<< '$' << setw(15) << i.price
@@ -54,35 +61,50 @@ ostream& operator<<(ostream& out, const ItemInfo i) {
 	return out;
 }
 
+//Needed typedefs for our "Tables"
 typedef map<string, ItemInfo> Catalog;
 typedef map<string, int> Order;
 
+// reads the input file and creates the catalog; throws a 
+// runtime_error if the file cannot be opened
 void readCatalog(Catalog& catalog, const string& fileName) {
+	//Open file
 	ifstream data_file(fileName);
+
+	//Make sure the file exists
 	if (!data_file) {
 		throw invalid_argument{ "File not found\n" };
-		return;
 	}
+
+	//Variable to store each line
 	string line;
 
+	//Loop line-by-line
 	while (getline(data_file, line, '\n')) {
+		stringstream iss(line); //Break string down by : tokens
+		string elem; // line token swap area
+		vector<string> tokens; //All tokens (Except the item#, which is first)
+		string SKU; //Store item SKU
 
-		stringstream iss(line);
-		string elem;
-		vector<string> vals;
-		string start;
-		getline(iss, start, ':');
+		//Grab SKU before loop
+		getline(iss, SKU, ':');
+
+		//Loop through remaining tokens, assembly list to pass to ItemInfo(vector<string>)
 		while (getline(iss, elem, ':')) {
-			vals.push_back(elem);
+			tokens.push_back(elem);
 		}
-		ItemInfo i = ItemInfo(vals);
-		catalog.insert({ start, i });
+
+		//Create item to place in catalog
+		ItemInfo i = ItemInfo(tokens);
+
+		//Catalog item
+		catalog.insert({ SKU, i });
 	}
 	data_file.close();
 }
 
-// reads the input file and creates the catalog; throws a 
-// runtime_error if the file cannot be opened
+// prints the SKU, description, price, and weight of every item in 
+// the catalog 
 void printCatalog(const Catalog& catalog) {
 	cout << "Catalog:\n";
 	cout
@@ -92,27 +114,25 @@ void printCatalog(const Catalog& catalog) {
 		<< setw(15) << left << "Shipping Wt. (lbs.)"
 		<< "\n";
 	cout << string(110, '=') << "\n";
-	for (pair<string, ItemInfo> i : catalog) {
-		cout << setw(10) << left << i.first << i.second << "\n";
+	for (Catalog::const_iterator it = catalog.begin(); it != catalog.end(); it++) {
+		cout << setw(10) << left << it->first << it->second << "\n";
 	}
 }
-// prints the SKU, description, price, and weight of every item in 
-// the catalog 
 
-
-ItemInfo getItemData(const Catalog& catalog, const string& sku) {
-	try {
-		return catalog.at(sku);
-	}
-	catch (out_of_range) {
-		return ItemInfo("Item Not Found", 0, 0);
-	}
-}
 // finds a single item by SKU and returns the details as a struct;
 // returns a dummy struct with the description "Item not found", 
 // price 0.00, and weight 0.00 if the SKU is not in the catalog
+ItemInfo getItemData(const Catalog& catalog, const string& sku) {
+	Catalog::const_iterator it = catalog.find(sku);
+	if (it == catalog.end()) {
+		return ItemInfo("Item Not Found", 0, 0);
+	}
+	else {
+		return it->second;
+	}
+}
 
-
+// Lists the SKU, description, and quantity of each type of order item
 void displayOrderItems(const Order& order, const Catalog& catalog) {
 	cout << "Order Items:\n";
 	cout
@@ -122,16 +142,17 @@ void displayOrderItems(const Order& order, const Catalog& catalog) {
 		<< "\n";
 	cout << string(110, '=') << "\n";
 
-	for (pair<string, int> item : order) {
-		ItemInfo d = getItemData(catalog, item.first);
+	;
+
+	for (Order::const_iterator it = order.begin(); it != order.end(); it++) {
+		ItemInfo d = getItemData(catalog, it->first);
 		cout
-			<< setw(10) << left << item.first
+			<< setw(10) << left << it->first
 			<< setw(60) << left << d.getDescription()
-			<< setw(15) << left << item.second
+			<< setw(15) << left << it->second
 			<< "\n";
 	}
 }
-// Lists the SKU, description, and quantity of each type of order item
 
 void addItem(Order & order, const Catalog& catalog, const string& sku, int quantity) {
 	ItemInfo i = getItemData(catalog, sku);
@@ -176,11 +197,11 @@ void displayOrderSummary(const Order& order, const Catalog& catalog) {
 	double subtotal = 0;
 	double weight = 0;
 
-	for (pair<string, int> item : order) {
-		ItemInfo info = getItemData(catalog, item.first);
-		num_items += item.second;
-		subtotal += info.getPrice() * item.second;
-		weight += info.getWeight() * item.second;
+	for (Order::const_iterator it = order.begin(); it != order.end(); it++) {
+		ItemInfo info = getItemData(catalog, it->first);
+		num_items += it->second;
+		subtotal += info.getPrice() * it->second;
+		weight += info.getWeight() * it->second;
 	}
 
 	cout << "Distinct items: " << order.size() << "\n";
