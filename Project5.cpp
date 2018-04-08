@@ -161,7 +161,8 @@ void addItem(Order & order, const Catalog& catalog, const string& sku, int quant
 	}
 	else {
 		try {
-			int exisiting_qty = order.at(sku);
+			Order::const_iterator it = order.find(sku);
+			int exisiting_qty = it == order.end() ? 0 : it->second;
 			order.insert_or_assign(sku, exisiting_qty + quantity);
 		}
 		catch (out_of_range) {
@@ -174,7 +175,8 @@ void addItem(Order & order, const Catalog& catalog, const string& sku, int quant
 
 void removeItem(Order & order, const string& sku, int quantity) {
 	try {
-		int existing_qty = order.at(sku);
+		Order::const_iterator it = order.find(sku);
+		int existing_qty = it == order.end() ? 0 : it->second;
 		if (existing_qty - quantity <= 0) {
 			order.erase(sku);
 		}
