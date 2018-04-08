@@ -42,12 +42,12 @@ public:
 
 	friend ostream& operator<<(ostream& out, const ItemInfo);
 private:
-		string description;
-		double price, weight;
+	string description;
+	double price, weight;
 
 };
 
-ostream& operator<<(ostream& out, const ItemInfo i){
+ostream& operator<<(ostream& out, const ItemInfo i) {
 	out << setw(60) << left << i.description
 		<< '$' << setw(15) << i.price
 		<< setw(15) << i.weight;
@@ -60,7 +60,7 @@ typedef map<string, int> Order;
 void readCatalog(Catalog& catalog, const string& fileName) {
 	ifstream data_file(fileName);
 	if (!data_file) {
-		throw invalid_argument{"File not found\n"};
+		throw invalid_argument{ "File not found\n" };
 		return;
 	}
 	string line;
@@ -72,11 +72,11 @@ void readCatalog(Catalog& catalog, const string& fileName) {
 		vector<string> vals;
 		string start;
 		getline(iss, start, ':');
-		while (getline(iss, elem, ':')){
+		while (getline(iss, elem, ':')) {
 			vals.push_back(elem);
 		}
 		ItemInfo i = ItemInfo(vals);
-		catalog.insert({start, i});
+		catalog.insert({ start, i });
 	}
 	data_file.close();
 }
@@ -85,8 +85,8 @@ void readCatalog(Catalog& catalog, const string& fileName) {
 // runtime_error if the file cannot be opened
 void printCatalog(const Catalog& catalog) {
 	cout << "Catalog:\n";
-	cout 
-		<< setw(10) << left <<  "SKU" 
+	cout
+		<< setw(10) << left << "SKU"
 		<< setw(60) << left << "Description"
 		<< setw(15) << left << "Unit Price"
 		<< setw(15) << left << "Shipping Wt. (lbs.)"
@@ -103,8 +103,9 @@ void printCatalog(const Catalog& catalog) {
 ItemInfo getItemData(const Catalog& catalog, const string& sku) {
 	try {
 		return catalog.at(sku);
-	}catch (out_of_range) {
-		return ItemInfo("Item Not Found",0,0);
+	}
+	catch (out_of_range) {
+		return ItemInfo("Item Not Found", 0, 0);
 	}
 }
 // finds a single item by SKU and returns the details as a struct;
@@ -121,7 +122,7 @@ void displayOrderItems(const Order& order, const Catalog& catalog) {
 		<< "\n";
 	cout << string(110, '=') << "\n";
 
-	for (pair<string, int> item: order) {
+	for (pair<string, int> item : order) {
 		ItemInfo d = getItemData(catalog, item.first);
 		cout
 			<< setw(10) << left << item.first
@@ -136,11 +137,13 @@ void addItem(Order & order, const Catalog& catalog, const string& sku, int quant
 	ItemInfo i = getItemData(catalog, sku);
 	if (i.getDescription() == "Item Not Found") {
 		throw logic_error("Item not found is catalog: " + sku);
-	}else {
+	}
+	else {
 		try {
 			int exisiting_qty = order.at(sku);
 			order.insert_or_assign(sku, exisiting_qty + quantity);
-		}catch (out_of_range) {
+		}
+		catch (out_of_range) {
 			order.insert_or_assign(sku, quantity);
 		}
 	}
@@ -153,11 +156,13 @@ void removeItem(Order & order, const string& sku, int quantity) {
 		int existing_qty = order.at(sku);
 		if (existing_qty - quantity <= 0) {
 			order.erase(sku);
-		}else {
+		}
+		else {
 			order.insert_or_assign(sku, existing_qty - quantity);
 		}
-	}catch (out_of_range) {
-		throw logic_error("Item not found in order: " + sku);	
+	}
+	catch (out_of_range) {
+		throw logic_error("Item not found in order: " + sku);
 	}
 }
 // removes items(s) from the order; throws a logic_error if the item 
@@ -178,8 +183,9 @@ void displayOrderSummary(const Order& order, const Catalog& catalog) {
 		weight += info.getWeight() * item.second;
 	}
 
-	cout << "Distinct item types: " << order.size() << "\n";
+	cout << "Distinct items: " << order.size() << "\n";
 	cout << "Total number of items: " << num_items << "\n";
+	cout << "Total cost: $" << subtotal << "\n";
 	cout << "Total weight: " << weight << "\n";
 }
 // displays the number of unique item types, the total number of 
@@ -238,18 +244,24 @@ int main()
 	displayOrderItems(order, catalog);
 
 	// try to remove an item that is not in the order to test exception handling
-
+	cout << "\nRemoving item not on order: 93456D\n";
+	try {
+		removeItem(order, "93456D", 12);
+	}
+	catch (logic_error) {
+		cout << "Caught item not being on order.\n";
+	}
 
 	// remove all of at least one item to make sure the order no longer shows it
-
+	cout << "\nRemoving the entire 93456B item.\n";
+	removeItem(order, "93456B", 1);
 
 	// display items in the order
-
-
-
+	displayOrderItems(order, catalog);
 
 	// display order summary
-
+	cout << "\n";
+	displayOrderSummary(order, catalog);
 
 	// portable pause
 	cin.get();
